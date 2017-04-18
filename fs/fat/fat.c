@@ -1321,12 +1321,58 @@ int fat_size(const char *filename, loff_t *size)
 	return do_fat_read_at(filename, 0, NULL, 0, LS_NO, 1, size);
 }
 
+#if defined(CONFIG_MOCANA_NANOBOOT)
+/* cdsxxx */
+
+typedef u32 ubyte4;
+extern ubyte4 gModulusLen;
+
+extern int
+SB_VERIFY_rsa(char* data, u32 dataLen);
+#endif
+
 int file_fat_read_at(const char *filename, loff_t pos, void *buffer,
 		     loff_t maxsize, loff_t *actread)
 {
-	printf("reading %s\n", filename);
-	return do_fat_read_at(filename, pos, buffer, maxsize, LS_NO, 0,
-			      actread);
+	int ret;
+
+	ret = do_fat_read_at(filename, pos, buffer, maxsize, LS_NO, 0, actread);
+
+#if defined(CONFIG_MOCANA_NANOBOOT)
+/* cdsxxx */
+	if ((0 == ret) && (0 == maxsize))
+	{
+		loff_t size;
+		ret =  fat_size(filename, &size);
+		printf("***************************************************\n");
+		printf("** Mocana NanoBoot: Verifying VFAT file at %s size %llu **\n", filename, size);
+		printf("***************************************************\n\n");
+
+		if (0 == SB_VERIFY_rsa((char*)buffer, size))
+		{
+			printf("*************************************\n");
+			printf("** Mocana NanoBoot: Verify Success **\n");
+			printf("*************************************\n\n");
+		} else {
+			printf("*************************************\n");
+			printf("** Mocana NanoBoot: Verify Failure **\n");
+			printf("*************************************\n\n");
+			memset(buffer, 0, size);
+			return -1;
+		}
+
+		if (strstr(filename, ".txt") != NULL)
+		{
+			/* This is a .txt file so remove the signature from the end of the file */
+			/* Before returning */
+			memset(buffer+size-gModulusLen, 0, gModulusLen);
+		}
+
+	}
+/* cdsxxx */
+#endif
+
+	return ret;
 }
 
 int file_fat_read(const char *filename, void *buffer, int maxsize)

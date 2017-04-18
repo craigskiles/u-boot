@@ -54,20 +54,75 @@
 #define DEFAULT_MMC_TI_ARGS \
 	"mmcdev=0\0" \
 	"mmcrootfstype=ext4 rootwait\0" \
-	"finduuid=part uuid mmc ${bootpart} uuid\0" \
+	"finduuid=part uuid ${devtype} ${bootpart} uuid\0" \
 	"args_mmc=run finduuid;setenv bootargs console=${console} " \
+		"${cape_disable} " \
+		"${cape_enable} " \
+		"${cape_uboot} " \
+		"root=PARTUUID=${uuid} ro " \
+		"rootfstype=${mmcrootfstype} " \
+		"${cmdline}\0" \
+	"args_mmc_old=setenv bootargs console=${console} " \
 		"${optargs} " \
-		"root=PARTUUID=${uuid} rw " \
-		"rootfstype=${mmcrootfstype}\0" \
-	"loadbootscript=load mmc ${mmcdev} ${loadaddr} boot.scr\0" \
-	"bootscript=echo Running bootscript from mmc${mmcdev} ...; " \
+		"${cape_disable} " \
+		"${cape_enable} " \
+		"${cape_uboot} " \
+		"root=${oldroot} ro " \
+		"rootfstype=${mmcrootfstype} " \
+		"${cmdline}\0" \
+	"args_mmc_uuid=setenv bootargs console=${console} " \
+		"${optargs} " \
+		"${cape_disable} " \
+		"${cape_enable} " \
+		"${cape_uboot} " \
+		"root=UUID=${uuid} ro " \
+		"rootfstype=${mmcrootfstype} " \
+		"${cmdline}\0" \
+	"args_uenv_root=setenv bootargs console=${console} " \
+		"${optargs} " \
+		"${cape_disable} " \
+		"${cape_enable} " \
+		"${cape_uboot} " \
+		"root=${uenv_root} ro " \
+		"rootfstype=${mmcrootfstype} " \
+		"${cmdline}\0" \
+	"args_netinstall=setenv bootargs ${netinstall_bootargs} " \
+		"${optargs} " \
+		"${cape_disable} " \
+		"${cape_enable} " \
+		"${cape_uboot} " \
+		"root=/dev/ram rw " \
+		"${cmdline}\0" \
+	"script=boot.scr\0" \
+	"scriptfile=${script}\0" \
+	"loadbootscript=load ${devtype} ${bootpart} ${loadaddr} ${scriptfile};\0" \
+	"bootscript=echo Running bootscript from mmc${bootpart} ...; " \
 		"source ${loadaddr}\0" \
 	"bootenvfile=uEnv.txt\0" \
-	"importbootenv=echo Importing environment from mmc${mmcdev} ...; " \
+	"bootenv=uEnv.txt\0" \
+	"importbootenv=echo Importing environment from ${devtype} ...; " \
 		"env import -t ${loadaddr} ${filesize}\0" \
-	"loadbootenv=fatload mmc ${mmcdev} ${loadaddr} ${bootenvfile}\0" \
+	"loadbootenv=load ${devtype} ${bootpart} ${loadaddr} ${bootenvfile}\0" \
 	"loadimage=load ${devtype} ${bootpart} ${loadaddr} ${bootdir}/${bootfile}\0" \
-	"loadfdt=load ${devtype} ${bootpart} ${fdtaddr} ${bootdir}/${fdtfile}\0" \
+	"loadrd=load ${devtype} ${bootpart} ${rdaddr} ${bootdir}/${rdfile}; setenv rdsize ${filesize}\0" \
+	"loadfdt=echo loading ${fdtdir}/${fdtfile} ...; load ${devtype} ${bootpart} ${fdtaddr} ${fdtdir}/${fdtfile}\0" \
+	"loadoverlay=echo uboot_overlays: loading ${uboot_overlay} ...; " \
+		"load ${devtype} ${bootpart} ${rdaddr} ${uboot_overlay}; " \
+		"fdt addr ${fdtaddr}; fdt resize ${fdt_buffer}; " \
+		"fdt apply ${rdaddr}; fdt resize ${fdt_buffer};\0" \
+	"virtualloadoverlay=if test -e ${devtype} ${bootpart} ${uboot_overlay}; then " \
+				"run loadoverlay;" \
+			"else " \
+				"echo uboot_overlays: unable to find [${devtype} ${bootpart} ${uboot_overlay}]...;" \
+			"fi;\0" \
+	"capeloadoverlay=if test -e ${devtype} ${bootpart} ${uboot_overlay}; then " \
+				"run loadoverlay;" \
+				"setenv cape_uboot bone_capemgr.uboot_capemgr_enabled=1; " \
+			"else " \
+				"echo uboot_overlays: unable to find [${devtype} ${bootpart} ${uboot_overlay}]...;" \
+			"fi;\0" \
+	"failumsboot=echo; echo FAILSAFE: U-Boot UMS (USB Mass Storage) enabled, media now available over the usb slave port ...; " \
+		"ums 0 ${devtype} 1;\0" \
 	"envboot=mmc dev ${mmcdev}; " \
 		"if mmc rescan; then " \
 			"echo SD/MMC found on device ${mmcdev};" \
@@ -119,6 +174,377 @@
 	"update_to_fit=setenv loadaddr ${fit_loadaddr}; setenv bootfile ${fit_bootfile}\0" \
 	"args_fit=setenv bootargs console=${console} \0" \
 	"loadfit=run args_fit; bootm ${loadaddr}#${fdtfile};\0" \
+
+#define EEWIKI_NFS \
+	"server_ip=192.168.1.100\0" \
+	"gw_ip=192.168.1.1\0" \
+	"netmask=255.255.255.0\0" \
+	"hostname=\0" \
+	"device=eth0\0" \
+	"autoconf=off\0" \
+	"root_dir=/home/userid/targetNFS\0" \
+	"tftp_dir=\0" \
+	"nfs_options=,vers=3\0" \
+	"nfsrootfstype=ext4 rootwait fixrtc\0" \
+	"nfsargs=setenv bootargs console=${console} " \
+		"${optargs} " \
+		"${cape_disable} " \
+		"${cape_enable} " \
+		"${cape_uboot} " \
+		"root=/dev/nfs rw " \
+		"rootfstype=${nfsrootfstype} " \
+		"nfsroot=${nfsroot} " \
+		"ip=${ip} " \
+		"${cmdline}\0" \
+	"nfsboot=echo Booting from ${server_ip} ...; " \
+		"setenv nfsroot ${server_ip}:${root_dir}${nfs_options}; " \
+		"setenv ip ${client_ip}:${server_ip}:${gw_ip}:${netmask}:${hostname}:${device}:${autoconf}; " \
+		"setenv autoload no; " \
+		"setenv serverip ${server_ip}; " \
+		"setenv ipaddr ${client_ip}; " \
+		"tftp ${loadaddr} ${tftp_dir}${bootfile}; " \
+		"tftp ${fdtaddr} ${tftp_dir}dtbs/${fdtfile}; " \
+		"run nfsargs; " \
+		"bootz ${loadaddr} - ${fdtaddr}\0" \
+	"nfsboot_uname_r=echo Booting from ${server_ip} ...; " \
+		"setenv nfsroot ${server_ip}:${root_dir}${nfs_options}; " \
+		"setenv ip ${client_ip}:${server_ip}:${gw_ip}:${netmask}:${hostname}:${device}:${autoconf}; " \
+		"setenv autoload no; " \
+		"setenv serverip ${server_ip}; " \
+		"setenv ipaddr ${client_ip}; " \
+		"tftp ${loadaddr} ${tftp_dir}vmlinuz-${uname_r}; " \
+		"tftp ${fdtaddr} ${tftp_dir}dtbs/${uname_r}/${fdtfile}; " \
+		"run nfsargs; " \
+		"bootz ${loadaddr} - ${fdtaddr}\0" \
+
+#define EEWIKI_BOOT \
+	"boot=${devtype} dev ${mmcdev}; " \
+		"if ${devtype} rescan; then " \
+			"gpio set 54;" \
+			"setenv bootpart ${mmcdev}:1; " \
+			"if test -e ${devtype} ${bootpart} /etc/fstab; then " \
+				"setenv mmcpart 1;" \
+			"fi; " \
+			"echo Checking for: /uEnv.txt ...;" \
+			"if test -e ${devtype} ${bootpart} /uEnv.txt; then " \
+				"if run loadbootenv; then " \
+					"gpio set 55;" \
+					"echo Loaded environment from /uEnv.txt;" \
+					"run importbootenv;" \
+				"fi;" \
+				"if test -n ${cape}; then " \
+					"if test -e ${devtype} ${bootpart} ${fdtdir}/${fdtbase}-${cape}.dtb; then " \
+						"setenv fdtfile ${fdtbase}-${cape}.dtb; " \
+					"fi; " \
+					"echo using: $fdtfile...; " \
+				"fi; " \
+				"echo Checking if uenvcmd is set ...;" \
+				"if test -n ${uenvcmd}; then " \
+					"gpio set 56; " \
+					"echo Running uenvcmd ...;" \
+					"run uenvcmd;" \
+				"fi;" \
+				"echo Checking if client_ip is set ...;" \
+				"if test -n ${client_ip}; then " \
+					"if test -n ${dtb}; then " \
+						"setenv fdtfile ${dtb};" \
+						"echo using ${fdtfile} ...;" \
+					"fi;" \
+					"gpio set 56; " \
+					"if test -n ${uname_r}; then " \
+						"echo Running nfsboot_uname_r ...;" \
+						"run nfsboot_uname_r;" \
+					"fi;" \
+					"echo Running nfsboot ...;" \
+					"run nfsboot;" \
+				"fi;" \
+			"fi; " \
+			"echo Checking for: /${script} ...;" \
+			"if test -e ${devtype} ${bootpart} /${script}; then " \
+				"gpio set 55;" \
+				"setenv scriptfile ${script};" \
+				"run loadbootscript;" \
+				"echo Loaded script from ${scriptfile};" \
+				"gpio set 56; " \
+				"run bootscript;" \
+			"fi; " \
+			"echo Checking for: /boot/${script} ...;" \
+			"if test -e ${devtype} ${bootpart} /boot/${script}; then " \
+				"gpio set 55;" \
+				"setenv scriptfile /boot/${script};" \
+				"run loadbootscript;" \
+				"echo Loaded script from ${scriptfile};" \
+				"gpio set 56; " \
+				"run bootscript;" \
+			"fi; " \
+			"echo Checking for: /boot/uEnv.txt ...;" \
+			"for i in 1 2 3 4 5 6 7 ; do " \
+				"setenv mmcpart ${i};" \
+				"setenv bootpart ${mmcdev}:${mmcpart};" \
+				"if test -e ${devtype} ${bootpart} /boot/uEnv.txt; then " \
+					"gpio set 55;" \
+					"load ${devtype} ${bootpart} ${loadaddr} /boot/uEnv.txt;" \
+					"env import -t ${loadaddr} ${filesize};" \
+					"echo Loaded environment from /boot/uEnv.txt;" \
+					"if test -n ${cape}; then " \
+						"echo debug: [cape=${cape}] ... ;" \
+						"setenv fdtfile ${fdtbase}-${cape}.dtb; " \
+						"echo Using: dtb=${fdtfile} ...;" \
+					"fi; " \
+					"if test -n ${dtb}; then " \
+						"echo debug: [dtb=${dtb}] ... ;" \
+						"setenv fdtfile ${dtb};" \
+						"echo Using: dtb=${fdtfile} ...;" \
+					"fi;" \
+					"echo Checking if uname_r is set in /boot/uEnv.txt...;" \
+					"if test -n ${uname_r}; then " \
+						"gpio set 56; " \
+						"setenv oldroot /dev/mmcblk${mmcdev}p${mmcpart};" \
+						"echo Running uname_boot ...;" \
+						"run uname_boot;" \
+					"fi;" \
+				"fi;" \
+			"done;" \
+		"fi;\0" \
+
+#define EEWIKI_UNAME_BOOT \
+	"uname_boot="\
+		"setenv bootdir /boot; " \
+		"setenv bootfile vmlinuz-${uname_r}; " \
+		"if test -e ${devtype} ${bootpart} ${bootdir}/${bootfile}; then " \
+			"echo loading ${bootdir}/${bootfile} ...; "\
+			"run loadimage;" \
+			"setenv fdtdir /boot/dtbs/${uname_r}; " \
+			"if test -n ${enable_uboot_overlays}; then " \
+				"if test -n ${uboot_base_dtb}; then " \
+					"if test -n ${dtb}; then " \
+						"echo uboot_overlays: dtb=${dtb} in /boot/uEnv.txt, unable to use [uboot_base_dtb=${uboot_base_dtb}] ... ;" \
+					"else " \
+						"echo uboot_overlays: [uboot_base_dtb=${uboot_base_dtb}] ... ;" \
+						"if test -e ${devtype} ${bootpart} ${fdtdir}/${uboot_base_dtb}; then " \
+							"setenv fdtfile ${uboot_base_dtb};" \
+							"echo uboot_overlays: Switching too: dtb=${fdtfile} ...;" \
+						"fi;" \
+					"fi;" \
+				"fi;" \
+			"fi;" \
+			"if test -e ${devtype} ${bootpart} ${fdtdir}/${fdtfile}; then " \
+				"run loadfdt;" \
+			"else " \
+				"setenv fdtdir /usr/lib/linux-image-${uname_r}; " \
+				"if test -e ${devtype} ${bootpart} ${fdtdir}/${fdtfile}; then " \
+					"run loadfdt;" \
+				"else " \
+					"setenv fdtdir /lib/firmware/${uname_r}/device-tree; " \
+					"if test -e ${devtype} ${bootpart} ${fdtdir}/${fdtfile}; then " \
+						"run loadfdt;" \
+					"else " \
+						"setenv fdtdir /boot/dtb-${uname_r}; " \
+						"if test -e ${devtype} ${bootpart} ${fdtdir}/${fdtfile}; then " \
+							"run loadfdt;" \
+						"else " \
+							"setenv fdtdir /boot/dtbs; " \
+							"if test -e ${devtype} ${bootpart} ${fdtdir}/${fdtfile}; then " \
+								"run loadfdt;" \
+							"else " \
+								"setenv fdtdir /boot/dtb; " \
+								"if test -e ${devtype} ${bootpart} ${fdtdir}/${fdtfile}; then " \
+									"run loadfdt;" \
+								"else " \
+									"setenv fdtdir /boot; " \
+									"if test -e ${devtype} ${bootpart} ${fdtdir}/${fdtfile}; then " \
+										"run loadfdt;" \
+									"else " \
+										"if test -e ${devtype} ${bootpart} ${fdtfile}; then " \
+											"run loadfdt;" \
+										"else " \
+											"echo; echo unable to find [dtb=${fdtfile}] did you name it correctly? ...; " \
+											"run failumsboot;" \
+										"fi;" \
+									"fi;" \
+								"fi;" \
+							"fi;" \
+						"fi;" \
+					"fi;" \
+				"fi;" \
+			"fi; " \
+			"if test -n ${enable_uboot_overlays}; then " \
+				"setenv fdt_buffer 0x60000;" \
+				"if test -n ${uboot_fdt_buffer}; then " \
+					"setenv fdt_buffer ${uboot_fdt_buffer};" \
+				"fi;" \
+				"echo uboot_overlays: [fdt_buffer=${fdt_buffer}] ... ;" \
+				"if test -n ${uboot_silicon}; then " \
+					"setenv uboot_overlay ${uboot_silicon}; " \
+					"run virtualloadoverlay;" \
+				"fi;" \
+				"if test -n ${uboot_overlay_addr0}; then " \
+					"if test -n ${disable_uboot_overlay_addr0}; then " \
+						"echo uboot_overlays: uboot loading of [${uboot_overlay_addr0}] disabled by /boot/uEnv.txt [disable_uboot_overlay_addr0=1]...;" \
+					"else " \
+						"setenv uboot_overlay ${uboot_overlay_addr0}; " \
+						"run capeloadoverlay;" \
+					"fi;" \
+				"fi;" \
+				"if test -n ${uboot_overlay_addr1}; then " \
+					"if test -n ${disable_uboot_overlay_addr1}; then " \
+						"echo uboot_overlays: uboot loading of [${uboot_overlay_addr1}] disabled by /boot/uEnv.txt [disable_uboot_overlay_addr1=1]...;" \
+					"else " \
+						"setenv uboot_overlay ${uboot_overlay_addr1}; " \
+						"run capeloadoverlay;" \
+					"fi;" \
+				"fi;" \
+				"if test -n ${uboot_overlay_addr2}; then " \
+					"if test -n ${disable_uboot_overlay_addr2}; then " \
+						"echo uboot_overlays: uboot loading of [${uboot_overlay_addr2}] disabled by /boot/uEnv.txt [disable_uboot_overlay_addr2=1]...;" \
+					"else " \
+						"setenv uboot_overlay ${uboot_overlay_addr2}; " \
+						"run capeloadoverlay;" \
+					"fi;" \
+				"fi;" \
+				"if test -n ${uboot_overlay_addr3}; then " \
+					"if test -n ${disable_uboot_overlay_addr3}; then " \
+						"echo uboot_overlays: uboot loading of [${uboot_overlay_addr3}] disabled by /boot/uEnv.txt [disable_uboot_overlay_addr3=1]...;" \
+					"else " \
+						"setenv uboot_overlay ${uboot_overlay_addr3}; " \
+						"run capeloadoverlay;" \
+					"fi;" \
+				"fi;" \
+				"if test -n ${uboot_overlay_addr4}; then " \
+					"setenv uboot_overlay ${uboot_overlay_addr4}; " \
+					"run capeloadoverlay;" \
+				"fi;" \
+				"if test -n ${uboot_overlay_addr5}; then " \
+					"setenv uboot_overlay ${uboot_overlay_addr5}; " \
+					"run capeloadoverlay;" \
+				"fi;" \
+				"if test -n ${uboot_overlay_addr6}; then " \
+					"setenv uboot_overlay ${uboot_overlay_addr6}; " \
+					"run capeloadoverlay;" \
+				"fi;" \
+				"if test -n ${uboot_overlay_addr7}; then " \
+					"setenv uboot_overlay ${uboot_overlay_addr7}; " \
+					"run capeloadoverlay;" \
+				"fi;" \
+				"if test -n ${uboot_emmc}; then " \
+					"if test -n ${disable_uboot_overlay_emmc}; then " \
+						"echo uboot_overlays: uboot loading of [${uboot_emmc}] disabled by /boot/uEnv.txt [disable_uboot_overlay_emmc=1]...;" \
+					"else " \
+						"setenv uboot_overlay ${uboot_emmc}; " \
+						"run virtualloadoverlay;" \
+					"fi;" \
+				"fi;" \
+				"if test -n ${uboot_video}; then " \
+					"if test -n ${disable_uboot_overlay_video}; then " \
+						"echo uboot_overlays: uboot loading of [${uboot_video}] disabled by /boot/uEnv.txt [disable_uboot_overlay_video=1]...;" \
+					"else " \
+						"if test -n ${disable_uboot_overlay_audio}; then " \
+							"echo uboot_overlays: uboot loading of [${uboot_video}] disabled by /boot/uEnv.txt [disable_uboot_overlay_audio=1]...;" \
+							"setenv uboot_overlay ${uboot_video_naudio}; " \
+							"run virtualloadoverlay;" \
+						"else " \
+							"setenv uboot_overlay ${uboot_video}; " \
+							"run virtualloadoverlay;" \
+						"fi;" \
+					"fi;" \
+				"fi;" \
+				"if test -n ${uboot_wireless}; then " \
+					"if test -n ${disable_uboot_overlay_wireless}; then " \
+						"echo uboot_overlays: uboot loading of [${uboot_wireless}] disabled by /boot/uEnv.txt [disable_uboot_overlay_wireless=1]...;" \
+					"else " \
+						"setenv uboot_overlay ${uboot_wireless}; " \
+						"run virtualloadoverlay;" \
+					"fi;" \
+				"fi;" \
+				"if test -n ${uboot_adc}; then " \
+					"if test -n ${disable_uboot_overlay_adc}; then " \
+						"echo uboot_overlays: uboot loading of [${uboot_adc}] disabled by /boot/uEnv.txt [disable_uboot_overlay_adc=1]...;" \
+					"else " \
+						"setenv uboot_overlay ${uboot_adc}; " \
+						"run virtualloadoverlay;" \
+					"fi;" \
+				"fi;" \
+				"if test -n ${dtb_overlay}; then " \
+					"setenv uboot_overlay ${dtb_overlay}; " \
+					"echo uboot_overlays: [dtb_overlay=${uboot_overlay}] ... ;" \
+					"run capeloadoverlay;" \
+				"fi;" \
+				"if test -n ${uboot_try_cape_universal}; then " \
+					"if test -n ${enable_uboot_cape_universal}; then " \
+						"if test -n ${cape_uboot}; then " \
+							"echo uboot_overlays: cape universal disabled, external cape enabled or detected...;" \
+						"else " \
+							"if test -n ${uboot_cape_universal_bbb}; then " \
+								"if test -n ${disable_uboot_overlay_emmc}; then " \
+									"if test -n ${disable_uboot_overlay_video}; then " \
+										"setenv uboot_overlay /lib/firmware/univ-bbb-xxx-00A0.dtbo; " \
+									"else " \
+										"if test -n ${disable_uboot_overlay_audio}; then " \
+											"setenv uboot_overlay /lib/firmware/univ-bbb-xVx-00A0.dtbo; " \
+										"else " \
+											"setenv uboot_overlay /lib/firmware/univ-bbb-xVA-00A0.dtbo; " \
+										"fi;" \
+									"fi;" \
+								"else " \
+									"if test -n ${disable_uboot_overlay_video}; then " \
+										"setenv uboot_overlay /lib/firmware/univ-bbb-Exx-00A0.dtbo; " \
+									"else " \
+										"if test -n ${disable_uboot_overlay_audio}; then " \
+											"setenv uboot_overlay /lib/firmware/univ-bbb-EVx-00A0.dtbo; " \
+										"else " \
+											"setenv uboot_overlay /lib/firmware/univ-bbb-EVA-00A0.dtbo; " \
+										"fi;" \
+									"fi;" \
+								"fi;" \
+								"run capeloadoverlay;" \
+							"fi;" \
+						"fi;" \
+					"else " \
+						"echo uboot_overlays: add [enable_uboot_cape_universal=1] to /boot/uEnv.txt to enable...;" \
+					"fi;" \
+				"fi;" \
+			"else " \
+				"echo uboot_overlays: add [enable_uboot_overlays=1] to /boot/uEnv.txt to enable...;" \
+			"fi;" \
+			"setenv rdfile initrd.img-${uname_r}; " \
+			"if test -e ${devtype} ${bootpart} ${bootdir}/${rdfile}; then " \
+				"echo loading ${bootdir}/${rdfile} ...; "\
+				"run loadrd;" \
+				"if test -n ${netinstall_enable}; then " \
+					"run args_netinstall; run message;" \
+					"echo debug: [${bootargs}] ... ;" \
+					"echo debug: [bootz ${loadaddr} ${rdaddr}:${rdsize} ${fdtaddr}] ... ;" \
+					"bootz ${loadaddr} ${rdaddr}:${rdsize} ${fdtaddr}; " \
+				"fi;" \
+				"if test -n ${uenv_root}; then " \
+					"run args_uenv_root;" \
+					"echo debug: [${bootargs}] ... ;" \
+					"echo debug: [bootz ${loadaddr} ${rdaddr}:${rdsize} ${fdtaddr}] ... ;" \
+					"bootz ${loadaddr} ${rdaddr}:${rdsize} ${fdtaddr}; " \
+				"fi;" \
+				"if test -n ${uuid}; then " \
+					"run args_mmc_uuid;" \
+					"echo debug: [${bootargs}] ... ;" \
+					"echo debug: [bootz ${loadaddr} ${rdaddr}:${rdsize} ${fdtaddr}] ... ;" \
+					"bootz ${loadaddr} ${rdaddr}:${rdsize} ${fdtaddr}; " \
+				"fi;" \
+				"run args_mmc_old;" \
+				"echo debug: [${bootargs}] ... ;" \
+				"echo debug: [bootz ${loadaddr} ${rdaddr}:${rdsize} ${fdtaddr}] ... ;" \
+				"bootz ${loadaddr} ${rdaddr}:${rdsize} ${fdtaddr}; " \
+			"else " \
+				"if test -n ${uenv_root}; then " \
+					"run args_uenv_root;" \
+					"echo debug: [${bootargs}] ... ;" \
+					"echo debug: [bootz ${loadaddr} - ${fdtaddr}] ... ;" \
+					"bootz ${loadaddr} - ${fdtaddr}; " \
+				"fi;" \
+				"run args_mmc_old;" \
+				"echo debug: [${bootargs}] ... ;" \
+				"echo debug: [bootz ${loadaddr} - ${fdtaddr}] ... ;" \
+				"bootz ${loadaddr} - ${fdtaddr}; " \
+			"fi;" \
+		"fi;\0" \
 
 /*
  * DDR information.  If the CONFIG_NR_DRAM_BANKS is not defined,

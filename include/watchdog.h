@@ -21,6 +21,11 @@
 int init_func_watchdog_reset(void);
 #endif
 
+/* cdsxxx */
+#undef CONFIG_WATCHDOG
+#undef CONFIG_HW_WATCHDOG
+/* cdsxxx */
+
 #if defined(CONFIG_WATCHDOG) || defined(CONFIG_HW_WATCHDOG)
 #define INIT_FUNC_WATCHDOG_INIT	init_func_watchdog_init,
 #define INIT_FUNC_WATCHDOG_RESET	init_func_watchdog_reset,

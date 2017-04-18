@@ -13,6 +13,11 @@ obj-$(CONFIG_SPL_FRAMEWORK) += spl.o
 obj-$(CONFIG_SPL_LOAD_FIT) += spl_fit.o
 obj-$(CONFIG_SPL_NOR_SUPPORT) += spl_nor.o
 obj-$(CONFIG_SPL_YMODEM_SUPPORT) += spl_ymodem.o
+
+# cdsxxx
+#obj-$(CONFIG_MOCANA_NANOBOOT) += sb_verify_rsa_pss_sha256.o mstdlib.o math_arm.o primefld_rsa.o pkcs1_simple.o sha256_256.o int64.o
+obj-$(CONFIG_MOCANA_NANOBOOT) += sb_verify_rsa_sha256.o mstdlib.o math_arm.o primefld_rsa.o rsa_simple.o sha256_256.o int64.o
+
 ifndef CONFIG_SPL_UBI
 obj-$(CONFIG_SPL_NAND_SUPPORT) += spl_nand.o
 obj-$(CONFIG_SPL_ONENAND_SUPPORT) += spl_onenand.o

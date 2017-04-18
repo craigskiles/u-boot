@@ -220,6 +220,16 @@ __weak int board_mmc_init(bd_t *bis)
 	return 0;
 }
 
+
+/* cdsxxx */
+#if defined(CONFIG_MOCANA_NANOBOOT)
+typedef u32 ubyte4;
+extern ubyte4 gModulusLen;
+
+extern int
+SB_VERIFY_rsa(char* data, u32 dataLen);
+#endif
+
 void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 {
 	typedef void __noreturn (*image_entry_noargs_t)(u32 *);
@@ -227,6 +237,33 @@ void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 			(image_entry_noargs_t) spl_image->entry_point;
 
 	u32 boot_params = *((u32 *)OMAP_SRAM_SCRATCH_BOOT_PARAMS);
+
+/* cdsxxx */
+#if defined(CONFIG_MOCANA_NANOBOOT)
+
+	printf("*********************************************\n");
+	printf("** Mocana Nanoboot: Verifying U-Boot Image **\n");
+	printf("*********************************************\n\n");
+
+	debug("load_addr= %lx size= %x\n", spl_image->load_addr, spl_image->size);
+
+    if (0 == SB_VERIFY_rsa((char*)(uintptr_t)spl_image->load_addr, (spl_image->size)+gModulusLen)) {
+
+		printf("*************************************\n");
+		printf("** Mocana NanoBoot: Verify Success **\n");
+		printf("*************************************\n\n");
+
+    }
+    else
+    {
+		printf("*************************************\n");
+	    printf("** Mocana NanoBoot: Verify Failure **\n");
+		printf("*************************************\n\n");
+
+		while(1);
+    }
+/* cdsxxx */
+#endif
 
 	debug("image entry point: 0x%lX\n", spl_image->entry_point);
 	/* Pass the saved boot_params from rom code */
