@@ -120,6 +120,14 @@ static struct module_pin_mux i2c1_pin_mux[] = {
 	{-1},
 };
 
+static struct module_pin_mux i2c2_pin_mux[] = {
+	{OFFSET(uart1_ctsn), (MODE(3) | RXACTIVE |
+			PULLUP_EN | PULLUDEN | SLEWCTRL)},	/* I2C_DATA */
+	{OFFSET(uart1_rtsn), (MODE(3) | RXACTIVE |
+			PULLUP_EN | PULLUDEN | SLEWCTRL)},	/* I2C_SCLK */
+	{-1},
+};
+
 static struct module_pin_mux spi0_pin_mux[] = {
 	{OFFSET(spi0_sclk), (MODE(0) | RXACTIVE | PULLUDEN)},	/* SPI0_SCLK */
 	{OFFSET(spi0_d0), (MODE(0) | RXACTIVE |
@@ -304,6 +312,11 @@ void enable_i2c0_pin_mux(void)
 	configure_module_pin_mux(i2c0_pin_mux);
 }
 
+void enable_i2c2_pin_mux(void)
+{
+	configure_module_pin_mux(i2c2_pin_mux);
+}
+
 /*
  * The AM335x GP EVM, if daughter card(s) are connected, can have 8
  * different profiles.  These profiles determine what peripherals are
@@ -352,6 +365,7 @@ void enable_board_pin_mux(void)
 #else
 		configure_module_pin_mux(mmc1_pin_mux);
 #endif
+		configure_module_pin_mux(i2c2_pin_mux);
 	} else if (board_is_gp_evm()) {
 		/* General Purpose EVM */
 		unsigned short profile = detect_daughter_board_profile();
@@ -381,7 +395,14 @@ void enable_board_pin_mux(void)
 		configure_module_pin_mux(mmc0_pin_mux_sk_evm);
 	} else if (board_is_bone_lt()) {
 		/* Beaglebone LT pinmux */
-		configure_module_pin_mux(mii1_pin_mux);
+		if(board_is_bone_lt_enhanced() || board_is_m10a()) {
+			/* SanCloud Beaglebone LT Enhanced pinmux */
+			configure_module_pin_mux(rgmii1_pin_mux);
+		}
+		else {
+			/* Beaglebone LT pinmux */
+			configure_module_pin_mux(mii1_pin_mux);
+		}
 		configure_module_pin_mux(mmc0_pin_mux);
 #if defined(CONFIG_NAND) && defined(CONFIG_EMMC_BOOT)
 		configure_module_pin_mux(nand_pin_mux);
@@ -390,6 +411,7 @@ void enable_board_pin_mux(void)
 #else
 		configure_module_pin_mux(mmc1_pin_mux);
 #endif
+		configure_module_pin_mux(i2c2_pin_mux);
 	} else if (board_is_icev2()) {
 		configure_module_pin_mux(mmc0_pin_mux);
 		configure_module_pin_mux(gpio0_18_pin_mux);

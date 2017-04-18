@@ -18,6 +18,15 @@ struct arm_z_header {
 	uint32_t	zi_end;
 } __attribute__ ((__packed__));
 
+#if defined(CONFIG_MOCANA_NANOBOOT)
+/* cdsxxx */
+typedef u32 ubyte4;
+extern ubyte4 gModulusLen;
+
+extern int
+SB_VERIFY_rsa(char* data, u32 dataLen);
+#endif
+
 int bootz_setup(ulong image, ulong *start, ulong *end)
 {
 	struct arm_z_header *zi = (struct arm_z_header *)image;
@@ -31,6 +40,33 @@ int bootz_setup(ulong image, ulong *start, ulong *end)
 
 	*start = zi->zi_start;
 	*end = zi->zi_end;
+
+/* cdsxxx */
+#if defined(CONFIG_MOCANA_NANOBOOT)
+
+	debug("image_addr= %lx start_addr= %lx end_addr= %lx\n", image, *start, *end);
+
+	printf("***************************************************\n");
+	printf("** Mocana NanoBoot: Verifying Linux Kernel Image **\n");
+	printf("***************************************************\n\n");
+
+	if (0 == SB_VERIFY_rsa((char*)(uintptr_t)image, *end-*start+gModulusLen))
+	{
+		printf("*************************************\n");
+		printf("** Mocana NanoBoot: Verify Success **\n");
+		printf("*************************************\n\n");
+
+	}
+	else
+	{
+		printf("*************************************\n");
+	    printf("** Mocana NanoBoot: Verify Failure **\n");
+		printf("*************************************\n\n");
+	    return 1;
+	}
+/* cdsxxx */
+#endif
+
 #ifndef CONFIG_SPL_FRAMEWORK
 	printf("Kernel image @ %#08lx [ %#08lx - %#08lx ]\n",
 	       image, *start, *end);

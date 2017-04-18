@@ -211,6 +211,15 @@ int ext4fs_probe(struct blk_desc *fs_dev_desc,
 	return 0;
 }
 
+#if defined(CONFIG_MOCANA_NANOBOOT)
+/* cdsxxx */
+typedef u32 ubyte4;
+extern ubyte4 gModulusLen;
+
+extern int
+SB_VERIFY_rsa(char* data, u32 dataLen);
+#endif
+
 int ext4_read_file(const char *filename, void *buf, loff_t offset, loff_t len,
 		   loff_t *len_read)
 {
@@ -226,7 +235,41 @@ int ext4_read_file(const char *filename, void *buf, loff_t offset, loff_t len,
 	if (len == 0)
 		len = file_len;
 
-	return ext4fs_read(buf, offset, len, len_read);
+	ret = ext4fs_read(buf, offset, len, len_read);
+
+#if defined(CONFIG_MOCANA_NANOBOOT)
+/* cdsxxx */
+	if (0 == ret)
+	{
+		printf("***************************************************\n");
+		printf("** Mocana NanoBoot: Verifying ext4 file at %s size %llu **\n", filename, len);
+		printf("***************************************************\n\n");
+		if (0 == SB_VERIFY_rsa((char*)buf, len))
+		{
+			printf("*************************************\n");
+			printf("** Mocana NanoBoot: Verify Success **\n");
+			printf("*************************************\n\n");
+		} else {
+			printf("*************************************\n");
+			printf("** Mocana NanoBoot: Verify Failure **\n");
+			printf("*************************************\n\n");
+			/* Zero the buffer */
+			memset(buf, 0, len);
+			len = 0;
+			return -1;
+		}
+
+		if (strstr(filename, ".txt") != NULL)
+		{
+			/* This is a .txt file so remove the signature from the end of the file */
+			/* Before returning */
+			memset(buf+len-gModulusLen, 0, gModulusLen);
+		}
+	}
+/* cdsxxx */
+#endif
+
+	return ret;
 }
 
 int ext4fs_uuid(char *uuid_str)
