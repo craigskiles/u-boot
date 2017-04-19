@@ -306,6 +306,12 @@ config ARCH_FIXUP_FDT_MEMORY
 	  used for booting OS with different memory setup where the part of
 	  the memory location should be used for different purpose.
 
+config MOCANA_NANOBOOT
+	bool "Enable Mocana's Nanoboot secure boot technology"
+	default y
+	help
+		This feature can be used for secure booting
+
 endmenu		# Boot images
 
 source "api/Kconfig"

@@ -21,6 +21,8 @@
 *.patch
 *.cfgtmp
 
+boneblack
+
 # host programs on Cygwin
 *.exe
 

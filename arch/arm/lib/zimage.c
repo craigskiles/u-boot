@@ -21,10 +21,12 @@ struct arm_z_header {
 #if defined(CONFIG_MOCANA_NANOBOOT)
 /* cdsxxx */
 typedef u32 ubyte4;
-extern ubyte4 gModulusLen;
+
+extern ubyte4
+SB_VERIFY_gModulusLen(void);
 
 extern int
-SB_VERIFY_rsa(char* data, u32 dataLen);
+SB_VERIFY(char* data, u32 dataLen);
 #endif
 
 int bootz_setup(ulong image, ulong *start, ulong *end)
@@ -50,7 +52,7 @@ int bootz_setup(ulong image, ulong *start, ulong *end)
 	printf("** Mocana NanoBoot: Verifying Linux Kernel Image **\n");
 	printf("***************************************************\n\n");
 
-	if (0 == SB_VERIFY_rsa((char*)(uintptr_t)image, *end-*start+gModulusLen))
+	if (0 == SB_VERIFY((char*)(uintptr_t)image, *end-*start+SB_VERIFY_gModulusLen()))
 	{
 		printf("*************************************\n");
 		printf("** Mocana NanoBoot: Verify Success **\n");
