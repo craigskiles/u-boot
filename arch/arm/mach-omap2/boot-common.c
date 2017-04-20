@@ -221,14 +221,17 @@ __weak int board_mmc_init(bd_t *bis)
 }
 
 
-/* cdsxxx */
 #if defined(CONFIG_MOCANA_NANOBOOT)
+/* cdsxxx */
 typedef u32 ubyte4;
-extern ubyte4 gModulusLen;
+
+extern ubyte4
+SB_VERIFY_gModulusLen(void);
 
 extern int
-SB_VERIFY_rsa(char* data, u32 dataLen);
+SB_VERIFY(char* data, u32 dataLen);
 #endif
+
 
 void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 {
@@ -241,13 +244,15 @@ void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 /* cdsxxx */
 #if defined(CONFIG_MOCANA_NANOBOOT)
 
+	int modulusLen = SB_VERIFY_gModulusLen();
+
 	printf("*********************************************\n");
 	printf("** Mocana Nanoboot: Verifying U-Boot Image **\n");
 	printf("*********************************************\n\n");
 
 	debug("load_addr= %lx size= %x\n", spl_image->load_addr, spl_image->size);
 
-    if (0 == SB_VERIFY_rsa((char*)(uintptr_t)spl_image->load_addr, (spl_image->size)+gModulusLen)) {
+    if (0 == SB_VERIFY((char*)(uintptr_t)spl_image->load_addr, (spl_image->size)+modulusLen)) {
 
 		printf("*************************************\n");
 		printf("** Mocana NanoBoot: Verify Success **\n");

@@ -46,13 +46,15 @@ int bootz_setup(ulong image, ulong *start, ulong *end)
 /* cdsxxx */
 #if defined(CONFIG_MOCANA_NANOBOOT)
 
+	int modulusLen = SB_VERIFY_gModulusLen();
+
 	debug("image_addr= %lx start_addr= %lx end_addr= %lx\n", image, *start, *end);
 
 	printf("***************************************************\n");
 	printf("** Mocana NanoBoot: Verifying Linux Kernel Image **\n");
 	printf("***************************************************\n\n");
 
-	if (0 == SB_VERIFY((char*)(uintptr_t)image, *end-*start+SB_VERIFY_gModulusLen()))
+	if (0 == SB_VERIFY((char*)(uintptr_t)image, *end-*start+modulusLen))
 	{
 		printf("*************************************\n");
 		printf("** Mocana NanoBoot: Verify Success **\n");

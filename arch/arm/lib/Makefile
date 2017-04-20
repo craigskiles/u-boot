@@ -24,10 +24,11 @@ else
 obj-y	+= relocate.o
 endif
 
-#cdsxxx
+# cdsxxx
 #obj-$(CONFIG_MOCANA_NANOBOOT) += sb_verify_rsa_pss_sha256.o mstdlib.o math_arm.o primefld_rsa.o pkcs1_simple.o sha256_256.o int64.o
-obj-$(CONFIG_MOCANA_NANOBOOT) += sb_verify_rsa_sha256.o mstdlib.o math_arm.o primefld_rsa.o rsa_simple.o sha256_256.o int64.o
-
+#obj-$(CONFIG_MOCANA_NANOBOOT) += sb_verify_rsa_sha256.o mstdlib.o math_arm.o primefld_rsa.o rsa_simple.o sha256_256.o int64.o
+#obj-$(CONFIG_MOCANA_NANOBOOT) += libsb.a
+# cdsxxx
 
 obj-$(CONFIG_CPU_V7M) += cmd_boot.o
 obj-$(CONFIG_OF_LIBFDT) += bootm-fdt.o
