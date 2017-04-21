@@ -710,6 +710,7 @@ u-boot-main := $(libs-y)
 #cdsxxx
 # Add Mocana sb_verify lib
 SBVERIFY_LIB = arch/$(ARCH)/lib/libsb.a
+#cdsxxx
 
 # Add GCC lib
 ifeq ($(CONFIG_USE_PRIVATE_LIBGCC),y)
@@ -717,7 +718,9 @@ PLATFORM_LIBGCC = arch/$(ARCH)/lib/lib.a
 else
 PLATFORM_LIBGCC := -L $(shell dirname `$(CC) $(c_flags) -print-libgcc-file-name`)
 endif
+#cdsxxx
 PLATFORM_LIBS += $(PLATFORM_LIBGCC) $(SBVERIFY_LIB)
+#cdsxxx
 export PLATFORM_LIBS
 export PLATFORM_LIBGCC
 

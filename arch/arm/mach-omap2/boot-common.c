@@ -226,7 +226,7 @@ __weak int board_mmc_init(bd_t *bis)
 typedef u32 ubyte4;
 
 extern ubyte4
-SB_VERIFY_gModulusLen(void);
+SB_VERIFY_signature_len(void);
 
 extern int
 SB_VERIFY(char* data, u32 dataLen);
@@ -244,7 +244,7 @@ void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 /* cdsxxx */
 #if defined(CONFIG_MOCANA_NANOBOOT)
 
-	int modulusLen = SB_VERIFY_gModulusLen();
+	int modulusLen = SB_VERIFY_signature_len();
 
 	printf("*********************************************\n");
 	printf("** Mocana Nanoboot: Verifying U-Boot Image **\n");

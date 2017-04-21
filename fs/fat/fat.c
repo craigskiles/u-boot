@@ -1326,7 +1326,7 @@ int fat_size(const char *filename, loff_t *size)
 typedef u32 ubyte4;
 
 extern ubyte4
-SB_VERIFY_gModulusLen(void);
+SB_VERIFY_signature_len(void);
 
 extern int
 SB_VERIFY(char* data, u32 dataLen);
@@ -1345,7 +1345,7 @@ int file_fat_read_at(const char *filename, loff_t pos, void *buffer,
 	if ((0 == ret) && (0 == maxsize))
 	{
 		loff_t size;
-		int modulusLen = SB_VERIFY_gModulusLen();
+		int modulusLen = SB_VERIFY_signature_len();
 
 		ret =  fat_size(filename, &size);
 

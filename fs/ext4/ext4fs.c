@@ -216,7 +216,7 @@ int ext4fs_probe(struct blk_desc *fs_dev_desc,
 typedef u32 ubyte4;
 
 extern ubyte4
-SB_VERIFY_gModulusLen(void);
+SB_VERIFY_signature_len(void);
 
 extern int
 SB_VERIFY(char* data, u32 dataLen);
@@ -242,7 +242,7 @@ int ext4_read_file(const char *filename, void *buf, loff_t offset, loff_t len,
 
 #if defined(CONFIG_MOCANA_NANOBOOT)
 /* cdsxxx */
-	int modulusLen = SB_VERIFY_gModulusLen();
+	int modulusLen = SB_VERIFY_signature_len();
 
 	if (0 == ret)
 	{

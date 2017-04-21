@@ -23,7 +23,7 @@ struct arm_z_header {
 typedef u32 ubyte4;
 
 extern ubyte4
-SB_VERIFY_gModulusLen(void);
+SB_VERIFY_signature_len(void);
 
 extern int
 SB_VERIFY(char* data, u32 dataLen);
@@ -46,7 +46,7 @@ int bootz_setup(ulong image, ulong *start, ulong *end)
 /* cdsxxx */
 #if defined(CONFIG_MOCANA_NANOBOOT)
 
-	int modulusLen = SB_VERIFY_gModulusLen();
+	int modulusLen = SB_VERIFY_signature_len();
 
 	debug("image_addr= %lx start_addr= %lx end_addr= %lx\n", image, *start, *end);
 
